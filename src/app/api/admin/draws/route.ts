@@ -1,6 +1,5 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { sendWinnerNotification, sendDrawResultsEmail } from '@/lib/email'
 
 async function isAdmin(supabase: any, userId: string) {
   const { data } = await supabase.from('users').select('role').eq('id', userId).single()

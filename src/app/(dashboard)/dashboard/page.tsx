@@ -14,11 +14,12 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [profileRes, subscriptionRes, scoresRes, winsRes] = await Promise.all([
+  const [profileRes, subscriptionRes, scoresRes, winsRes, drawsRes] = await Promise.all([
     supabase.from('users').select('*, charities(name)').eq('id', user.id).single(),
     supabase.from('subscriptions').select('*').eq('user_id', user.id).single(),
     supabase.from('scores').select('*').eq('user_id', user.id).order('date', { ascending: false }),
     supabase.from('winner_verifications').select('*, draws(month, year), draw_results(prize_per_winner, match_type)').eq('user_id', user.id).eq('payout_status', 'paid'),
+    supabase.from('draws').select('month, year, status').order('year', { ascending: false }).order('month', { ascending: false }).limit(3),
   ])
 
   const profile = profileRes.data
@@ -27,6 +28,11 @@ export default async function DashboardPage() {
   const wins = winsRes.data || []
 
   const totalWon = wins.reduce((sum: number, w: any) => sum + (w.draw_results?.prize_per_winner || 0), 0)
+  const draws = drawsRes.data || []
+  const now = new Date()
+  const nextDrawMonth = now.getMonth() + 2 > 12 ? 1 : now.getMonth() + 2
+  const nextDrawYear = now.getMonth() + 2 > 12 ? now.getFullYear() + 1 : now.getFullYear()
+  const drawsEntered = draws.filter((d: any) => d.status === 'published').length
 
   const statusVariant = subscription?.status === 'active' ? 'success' : subscription?.status === 'lapsed' ? 'warning' : 'danger'
 
@@ -97,6 +103,28 @@ export default async function DashboardPage() {
           </div>
         </Card>
       </div>
+
+      {/* Participation Summary */}
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          <Calendar className="w-5 h-5 text-purple-400" />
+          <h2 className="font-semibold text-white">Participation Summary</h2>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-white">{drawsEntered}</p>
+            <p className="text-xs text-white/40 mt-1">Draws Entered</p>
+          </div>
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-2xl font-black text-brand-400">{scores.length}</p>
+            <p className="text-xs text-white/40 mt-1">Active Scores</p>
+          </div>
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-lg font-bold text-accent-400">{getMonthName(nextDrawMonth)} {nextDrawYear}</p>
+            <p className="text-xs text-white/40 mt-1">Next Draw</p>
+          </div>
+        </div>
+      </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Recent Scores */}

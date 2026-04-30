@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { formatCurrency, getMonthName } from '@/lib/utils'
-import { Trophy, Upload } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import WinnerUpload from '@/components/dashboard/WinnerUpload'
 
 export default async function WinningsPage() {
